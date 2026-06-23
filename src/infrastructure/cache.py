@@ -116,11 +116,16 @@ class QueryResponseCache:
         return self.backend.get(key)
     
     def cache_response(
-        self, 
-        query: str, 
-        response: str, 
-        sources: List[str],
+        self,
+        query: str,
+        response: str,
+        sources: List[Dict[str, Any]],
         model_version: str = "v1",
+        relevance_score: float = 0.0,
+        retrieval_time_ms: int = 0,
+        generation_time_ms: int = 0,
+        total_time_ms: int = 0,
+        ontology_entities: Optional[List[str]] = None,
         ttl: int = 86400  # 24 horas
     ):
         """Armazena resposta em cache"""
@@ -129,8 +134,13 @@ class QueryResponseCache:
             "query": query,
             "response": response,
             "sources": sources,
+            "relevance_score": relevance_score,
+            "retrieval_time_ms": retrieval_time_ms,
+            "generation_time_ms": generation_time_ms,
+            "total_time_ms": total_time_ms,
+            "ontology_entities": ontology_entities or [],
+            "model_version": model_version,
             "timestamp": datetime.now().isoformat(),
-            "model_version": model_version
         }
         self.backend.set(key, cached_data, ttl)
     

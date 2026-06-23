@@ -1,6 +1,4 @@
-# 🚀 Quick Start - Hyperledger RAG API
-
-## ⚡ Iniciar Rápido (5 minutos)
+# Quick Start - Hyperledger RAG API
 
 ### Fase 1: API Local (Sem Docker)
 
@@ -70,23 +68,23 @@ curl -X POST "http://localhost:8000/api/v1/query" \
 
 ---
 
-## 📋 Arquitetura Atual
+## Arquitetura Atual
 
-### ✅ **FastAPI + RAG Otimizado**
+### **FastAPI + RAG Otimizado**
 - API REST completa
 - Ontologia do Hyperledger (16 entidades)
 - Cache em memória
 - WebSocket para streaming
 - Validação com Pydantic
 
-### 🐳 **Docker**
+### **Docker**
 - Containerização da API
 - Docker Compose para execução simplificada
 - Documentação completa
 
 ---
 
-## 📚 Documentação
+## Documentação
 
 - **SETUP_GUIDE.md**: Guia completo com todas as 3 fases
 - **Swagger Docs**: `/docs` na API
@@ -94,7 +92,7 @@ curl -X POST "http://localhost:8000/api/v1/query" \
 
 ---
 
-## 🔗 Principais Endpoints
+## Principais Endpoints
 
 | Método | Endpoint | Descrição |
 |--------|----------|-----------|
@@ -107,7 +105,7 @@ curl -X POST "http://localhost:8000/api/v1/query" \
 
 ---
 
-## 🐳 Comandos Docker Úteis
+## Comandos Docker Úteis
 
 ```bash
 # Ver logs
@@ -128,7 +126,7 @@ docker-compose down -v
 
 ---
 
-## 🧪 Testar API
+## Testar API
 
 ```bash
 # Rodar suite de testes
@@ -140,19 +138,7 @@ curl "http://localhost:8000/api/v1/health"
 
 ---
 
-## 🔑 Variáveis de Ambiente Principais
-
-```bash
-ENVIRONMENT=development          # development, staging, production
-API_PORT=8000                   # Porta da API
-API_KEY_REQUIRED=false          # Require API keys
-```
-
-Veja `.env` para todas as opções.
-
----
-
-## ⚠️ Troubleshooting
+## Troubleshooting
 
 ### Erro: "FAISS index not found"
 ```bash
@@ -167,7 +153,7 @@ API_PORT=8001
 
 ---
 
-## 🎯 Stack
+## Stack
 
 - **Backend**: FastAPI + Uvicorn
 - **RAG**: LangChain + FAISS + TinyLlama

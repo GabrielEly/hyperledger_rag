@@ -11,8 +11,9 @@ from datetime import datetime
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Depends, Header, status
+from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse as FastAPIStreamingResponse
 import structlog
 
 from src.infrastructure.config import get_settings, Settings
@@ -132,11 +133,18 @@ async def query(
     - **top_k**: Número de documentos recuperados (padrão: 4)
     """
     try:
+        start = time.perf_counter()
         # Verifica cache
         if request.use_cache and response_cache:
             cached = response_cache.get_response(request.query, request.model_version)
             if cached:
-                return QueryResponse(**cached, from_cache=True)
+                elapsed_ms = max(1, int((time.perf_counter() - start) * 1000))
+                cached_response = cached.copy()
+                cached_response["from_cache"] = True
+                cached_response["retrieval_time_ms"] = elapsed_ms
+                cached_response["generation_time_ms"] = 0
+                cached_response["total_time_ms"] = elapsed_ms
+                return QueryResponse(**cached_response)
         
         # Enriquece query com ontologia
         ontology_context = []
@@ -175,8 +183,13 @@ async def query(
             response_cache.cache_response(
                 request.query,
                 response_text,
-                [s.url or "" for s in sources],
-                request.model_version
+                [s.model_dump() for s in sources],
+                request.model_version,
+                relevance_score=response.relevance_score,
+                retrieval_time_ms=response.retrieval_time_ms,
+                generation_time_ms=response.generation_time_ms,
+                total_time_ms=response.total_time_ms,
+                ontology_entities=response.ontology_entities,
             )
         
         return response
@@ -211,7 +224,7 @@ async def query_stream(
         except Exception as e:
             yield f"data: {StreamingResponse(type='error', data=str(e)).model_dump_json()}\n\n"
     
-    return StreamingResponse(generate(), media_type="text/event-stream")
+    return FastAPIStreamingResponse(generate(), media_type="text/event-stream")
 
 
 # ==================== ENDPOINTS DE ADMIN ====================
@@ -313,13 +326,14 @@ async def root():
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request, exc):
     """Handler customizado para HTTPExceptions"""
+    error_payload = ErrorResponse(
+        error=exc.detail,
+        error_code="HTTP_ERROR",
+        request_id=str(request.headers.get("x-request-id", "unknown"))
+    )
     return JSONResponse(
         status_code=exc.status_code,
-        content=ErrorResponse(
-            error=exc.detail,
-            error_code="HTTP_ERROR",
-            request_id=str(request.headers.get("x-request-id", "unknown"))
-        ).model_dump()
+        content=jsonable_encoder(error_payload)
     )
 
 

@@ -1,6 +1,6 @@
 from transformers import pipeline
 from langchain_huggingface import HuggingFacePipeline
-from langchain_classic.chains import RetrievalQA
+from langchain.chains import RetrievalQA
 from src.core.interfaces import LanguageModel, VectorStore
 
 class TinyLlamaModel(LanguageModel):
