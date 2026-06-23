@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hyperledger RAG - Atualização e API</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons@latest/tabler-icons.min.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #eef3f7; color: #1f2937; }
+    body { display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .deck { width: 100%; max-width: 1100px; background: #ffffff; border-radius: 18px; box-shadow: 0 30px 80px rgba(15, 23, 42, 0.18); overflow: hidden; }
+    .slides { position: relative; width: 100%; min-height: 700px; background: #fff; }
+    .slide { position: absolute; inset: 0; opacity: 0; visibility: hidden; padding: 44px 58px; transition: opacity 0.45s ease, visibility 0.45s ease; overflow-y: auto; }
+    .slide.active { opacity: 1; visibility: visible; position: relative; }
+    h1, h2, h3 { margin-bottom: 18px; line-height: 1.08; }
+    h1 { font-size: 3.1rem; color: #0f172a; }
+    h2 { font-size: 2.05rem; color: #0f172a; }
+    h3 { font-size: 1.15rem; color: #2563eb; }
+    p { margin-bottom: 14px; font-size: 1rem; line-height: 1.72; color: #334155; }
+    ul, ol { margin: 16px 0 20px 1.5rem; color: #475569; }
+    li { margin-bottom: 10px; }
+    .badge { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 999px; background: rgba(59, 130, 246, 0.12); color: #1d4ed8; font-weight: 600; font-size: 0.95rem; }
+    .panel { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 22px; margin: 20px 0; }
+    .panel strong { display: block; margin-bottom: 10px; color: #0f172a; }
+    .grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+    .card { background: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0; padding: 20px; min-height: 180px; }
+    .card h4 { margin-bottom: 12px; color: #2563eb; }
+    .card p { margin: 0; font-size: 0.95rem; }
+    .code { background: #0f172a; color: #e2e8f0; border-radius: 14px; padding: 18px; overflow-x: auto; font-family: 'Fira Code', monospace; font-size: 0.94rem; line-height: 1.6; margin-top: 14px; }
+    .code span.keyword { color: #60a5fa; }
+    .code span.string { color: #fbbf24; }
+    .code span.comment { color: #94a3b8; }
+    .controls { display: flex; justify-content: space-between; gap: 14px; align-items: center; padding: 20px 28px 24px; background: linear-gradient(90deg, rgba(59,130,246,0.08), rgba(14,165,233,0.06)); }
+    .button { border: none; border-radius: 999px; padding: 14px 22px; font-size: 0.95rem; cursor: pointer; font-weight: 700; display: inline-flex; align-items: center; gap: 10px; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .button:hover { transform: translateY(-1px); box-shadow: 0 12px 30px rgba(56, 189, 248, 0.18); }
+    .button.primary { background: #2563eb; color: white; }
+    .button.secondary { background: #e2e8f0; color: #1f2937; }
+    .indicator { font-weight: 700; color: #334155; }
+    .section-title { margin-top: 30px; margin-bottom: 20px; color: #0f172a; }
+    .highlight { color: #2563eb; font-weight: 700; }
+    @media (max-width: 820px) {
+      .slide { padding: 30px 24px; }
+      h1 { font-size: 2.1rem; }
+      h2 { font-size: 1.7rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="deck">
+    <div class="slides">
+      <div class="slide active">
+        <span class="badge">Atualização 2026</span>
+        <h1>Hyperledger RAG</h1>
+        <p>Nova apresentação com as melhorias do projeto, foco na API e no fluxo de RAG local para consultas à documentação Hyperledger Fabric.</p>
+        <div class="grid">
+          <div class="card"><h4>Arquitetura limpa</h4><p>Separação clara entre <strong>core</strong>, <strong>application</strong> e <strong>infrastructure</strong>.</p></div>
+          <div class="card"><h4>API REST</h4><p>Endereços para consulta, monitoramento, crawling e métricas.</p></div>
+          <div class="card"><h4>RAG otimizado</h4><p>Recuperação com <strong>FAISS</strong>, geração com <strong>TinyLlama</strong> e enriquecimento com ontologia.</p></div>
+        </div>
+      </div>
+
+      <div class="slide">
+        <h2>Melhorias entregues</h2>
+        <ul>
+          <li>Refatoração para API mais robusta e startup controlada com <code>lifespan</code>.</li>
+          <li>Cache de respostas para reduzir latência em consultas repetidas.</li>
+          <li>Streaming SSE em <code>/api/v1/query/stream</code> para resposta token-a-token.</li>
+          <li>Monitoração de saúde em <code>/api/v1/health</code> e métricas em <code>/api/v1/stats</code>.</li>
+          <li>Job de crawling e ingestão de documentos via endpoint protegido <code>/api/v1/crawl</code>.</li>
+        </ul>
+      </div>
+
+      <div class="slide">
+        <h2>O que a API oferece hoje</h2>
+        <div class="grid">
+          <div class="card"><h4>Query</h4><p><code>POST /api/v1/query</code> — pergunta ao RAG e recebe resposta completa.</p></div>
+          <div class="card"><h4>Streaming</h4><p><code>POST /api/v1/query/stream</code> — resposta incremental para UI em tempo real.</p></div>
+          <div class="card"><h4>Admin</h4><p><code>POST /api/v1/crawl</code> — inicia recrawling e reindexação.</p></div>
+          <div class="card"><h4>Monitoramento</h4><p><code>GET /api/v1/health</code> — verifica a saúde da API.</p></div>
+        </div>
+      </div>
+
+      <div class="slide">
+        <h2>Fluxo da requisição RAG</h2>
+        <ol>
+          <li>Recebe query JSON no endpoint <code>/api/v1/query</code>.</li>
+          <li>Verifica cache e retorna resultado se existir.</li>
+          <li>Enriquece query com ontologia Hyperledger, se habilitado.</li>
+          <li>Executa busca no indice FAISS.</li>
+          <li>Gera resposta com TinyLlama usando contexto recuperado.</li>
+          <li>Cachea a resposta para consultas futuras.</li>
+        </ol>
+        <div class="panel"><strong>Resultado</strong><p>Maior precisão, menor latência e auditoria de origem com referências de documentação.</p></div>
+      </div>
+
+      <div class="slide">
+        <h2>API pública e autenticação</h2>
+        <p>O serviço usa variáveis de ambiente definidas em <code>.env</code> e <code>Settings</code> para controlar:</p>
+        <ul>
+          <li><strong>API_HOST</strong> e <strong>API_PORT</strong></li>
+          <li><strong>API_PREFIX</strong> (<code>/api/v1</code>)</li>
+          <li><strong>API_KEY_REQUIRED</strong> e <strong>API_KEYS</strong></li>
+          <li><strong>RATE_LIMIT</strong> e <strong>CACHE</strong></li>
+        </ul>
+        <p>Se <code>API_KEY_REQUIRED=true</code>, envie <code>X-API-KEY</code> em todas as requisições protegidas.</p>
+      </div>
+
+      <div class="slide">
+        <h2>Exemplo de consulta</h2>
+        <div class="code"><span class="comment"># Corpo JSON enviado ao endpoint</span>
+{
+  "query": "O que é um chaincode no Hyperledger Fabric?",
+  "model_version": "v1",
+  "use_cache": true,
+  "use_ontology": true,
+  "top_k": 4,
+  "stream": false
+}
+</div>
+        <div class="code"><span class="comment"># Exemplo curl</span>
+curl -X POST "http://localhost:8000/api/v1/query" \
+  -H "Content-Type: application/json" \
+  -H "X-API-KEY: SUA_CHAVE_AQUI" \
+  -d '{"query":"O que é um chaincode no Hyperledger Fabric?","use_cache":true,"use_ontology":true,"top_k":4}'
+</div>
+      </div>
+
+      <div class="slide">
+        <h2>Execução do crawling via API</h2>
+        <p>Este projeto permite iniciar um novo crawling diretamente pela API:</p>
+        <div class="code"><span class="comment"># Requisição para recrawling</span>
+POST /api/v1/crawl
+{
+  "max_pages": 50,
+  "force_refresh": false
+}
+</div>
+        <div class="panel"><strong>Atenção</strong><p>O endpoint de crawling exige autenticação e atualiza o índice FAISS no caminho configurado em <code>VECTOR_DB_PATH</code>.</p></div>
+      </div>
+
+      <div class="slide">
+        <h2>Monitoramento e métricas</h2>
+        <div class="grid">
+          <div class="card"><h4>Health</h4><p><code>GET /api/v1/health</code> — verifica status do RAG, cache e índice.</p></div>
+        </div>
+        <div class="panel"><strong>Valor</strong><p>Permite observabilidade e planejamento de recrawling antes de novas consultas.</p></div>
+      </div>
+
+      <div class="slide">
+        <h2>Melhorias técnicas</h2>
+        <ul>
+          <li>Startup controlada pelo lifecycle do FastAPI.</li>
+          <li>Cache in-memory para consultas idênticas.</li>
+          <li>Integração com ontologia Hyperledger para melhor entendimento.</li>
+          <li>Modelo local <code>TinyLlama</code> e embeddings <code>all-MiniLM-l6-v2</code>.</li>
+          <li>FAISS como motor de busca vetorial offline.</li>
+        </ul>
+        <div class="card"><h4>Arquitetura</h4><p><code>src/core</code> → <code>src/application</code> → <code>src/infrastructure</code></p></div>
+      </div>
+
+      <div class="slide">
+        <h2>Próximos passos</h2>
+        <ul>
+          <li>Adicionar persistência real de <strong>feedback</strong> e métricas de uso.</li>
+          <li>Implementar verificação real de estado do índice e contagem de documentos.</li>
+          <li>Aprimorar o streaming com IDs de sessão e reconexão.</li>
+          <li>Adicionar dashboard de status e logs em tempo real.</li>
+        </ul>
+        <div class="panel"><strong>Benefício</strong><p>Uma base sólida para evolução do produto com APIs estáveis e observabilidade.</p></div>
+      </div>
+
+      <div class="slide" style="background: linear-gradient(135deg, #0f172a, #2563eb); color: white; justify-content: center; text-align: center;">
+        <h2>Obrigado!</h2>
+        <p style="font-size: 1.05rem; margin-top: 18px;">Hyperledger RAG agora tem API madura, monitoramento e fluxo de RAG moderno.</p>
+        <p style="margin-top: 36px; color: rgba(255,255,255,0.8);">Use <strong>query</strong>, <strong>stream</strong>, <strong>crawl</strong>, <strong>health</strong>, <strong>stats</strong> e <strong>index-info</strong> para explorar o sistema.</p>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="button secondary" id="prevBtn" onclick="previousSlide()"> <i class="ti ti-arrow-left"></i> Anterior</button>
+      <span class="indicator"><span id="currentSlide">1</span> / <span id="totalSlides">10</span></span>
+      <button class="button primary" id="nextBtn" onclick="nextSlide()">Próximo <i class="ti ti-arrow-right"></i></button>
+    </div>
+  </div>
+
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    let currentIndex = 0;
+    const totalSlides = slides.length;
+    document.getElementById('totalSlides').textContent = totalSlides;
+
+    function showSlide(index) {
+      slides[currentIndex].classList.remove('active');
+      currentIndex = (index + totalSlides) % totalSlides;
+      slides[currentIndex].classList.add('active');
+      document.getElementById('currentSlide').textContent = currentIndex + 1;
+      document.getElementById('prevBtn').disabled = currentIndex === 0;
+      document.getElementById('nextBtn').disabled = currentIndex === totalSlides - 1;
+    }
+
+    function nextSlide() { showSlide(currentIndex + 1); }
+    function previousSlide() { showSlide(currentIndex - 1); }
+    document.addEventListener('keydown', event => {
+      if (event.key === 'ArrowRight') nextSlide();
+      if (event.key === 'ArrowLeft') previousSlide();
+    });
+  </script>
+</body>
+</html>

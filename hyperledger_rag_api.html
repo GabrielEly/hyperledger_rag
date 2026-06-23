@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hyperledger RAG - Guia de Funcionalidades e API</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      line-height: 1.6;
+      color: #333;
+      background: #f2f4f8;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 32px;
+      background: #fff;
+      box-shadow: 0 2px 14px rgba(0,0,0,0.08);
+      border-radius: 12px;
+    }
+    h1, h2, h3 {
+      color: #0a3d62;
+    }
+    h1 {
+      margin-bottom: 0.25rem;
+    }
+    p { margin: 0.9rem 0; }
+    pre {
+      background: #1e272e;
+      color: #d2dae2;
+      padding: 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 0.95rem;
+    }
+    code {
+      font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+    }
+    ul, ol {
+      margin: 0.5rem 0 1rem 1.4rem;
+    }
+    .note {
+      padding: 16px;
+      background: #e1f5fe;
+      border-left: 4px solid #039be5;
+      border-radius: 8px;
+      margin: 1rem 0;
+    }
+    .section {
+      margin-top: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Hyperledger RAG</h1>
+    <p>Este guia apresenta as funcionalidades do sistema RAG e os endpoints da API REST disponíveis no projeto.</p>
+
+    <div class="section">
+      <h2>1. Funcionalidades do RAG</h2>
+      <ul>
+        <li><strong>Crawler</strong>: coleta a documentação do Hyperledger Fabric da web.</li>
+        <li><strong>Indexação vetorial</strong>: gera embeddings e armazena em FAISS.</li>
+        <li><strong>RAG local</strong>: usa modelos locais para responder perguntas com contexto recuperado.</li>
+        <li><strong>Ontologia</strong>: enriquece queries com contexto de Hyperledger.</li>
+        <li><strong>Cache</strong>: evita reprocessar perguntas idênticas.</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>2. Como o sistema funciona</h2>
+      <ol>
+        <li><strong>Crawling</strong>: extrai páginas da documentação do Hyperledger Fabric.</li>
+        <li><strong>Ingestão</strong>: divide o texto em chunks e converte em vetores.</li>
+        <li><strong>Busca</strong>: consulta o índice FAISS para encontrar trechos relevantes.</li>
+        <li><strong>Geração</strong>: envia o contexto ao modelo LLM local para gerar a resposta.</li>
+      </ol>
+    </div>
+
+    <div class="section">
+      <h2>3. Pré-requisitos</h2>
+      <ul>
+        <li>Python 3.10 ou superior.</li>
+        <li>Dependências instaladas via <code>pip install -r requirements.txt</code>.</li>
+        <li>Índice FAISS gerado em <code>faiss_index_v2</code> antes de realizar consultas no RAG.</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>4. Iniciar a API</h2>
+      <p>O arquivo principal da API é <code>src/api/main.py</code>. Para iniciar a API em desenvolvimento:</p>
+      <pre><code>uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000</code></pre>
+      <p>Valores padrão de configuração:</p>
+      <ul>
+        <li><code>API_HOST</code>: <strong>0.0.0.0</strong></li>
+        <li><code>API_PORT</code>: <strong>8000</strong></li>
+        <li><code>API_PREFIX</code>: <strong>/api/v1</strong></li>
+      </ul>
+      <div class="note">
+        <strong>Importante:</strong> por padrão a API exige cabeçalho <code>X-API-KEY</code> se <code>API_KEY_REQUIRED</code> estiver habilitado.
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>5. Endpoints principais</h2>
+
+      <h3>5.1 POST /api/v1/query</h3>
+      <p>Faz uma pergunta ao RAG e retorna a resposta gerada.</p>
+      <p>Payload JSON:</p>
+      <pre><code>{
+  "query": "O que é um chaincode no Hyperledger Fabric?",
+  "model_version": "v1",
+  "use_cache": true,
+  "use_ontology": true,
+  "top_k": 4,
+  "stream": false
+}</code></pre>
+      <p>Resposta JSON:</p>
+      <pre><code>{
+  "query": "O que é um chaincode?",
+  "response": "Um chaincode é um programa (smart contract)...",
+  "sources": [
+    {
+      "title": "Hyperledger Fabric Documentation",
+      "url": "https://hyperledger-fabric.readthedocs.io",
+      "relevance_score": 0.9,
+      "snippet": null
+    }
+  ],
+  "relevance_score": 0.85,
+  "retrieval_time_ms": 50,
+  "generation_time_ms": 1230,
+  "total_time_ms": 1280,
+  "from_cache": false,
+  "ontology_entities": ["chaincode", "peer", "transaction"],
+  "model_version": "v1"
+}</code></pre>
+
+      <h3>5.2 POST /api/v1/query/stream</h3>
+      <p>Gera uma resposta em streaming via Server-Sent Events (SSE). Útil para interfaces que exibem resposta token por token.</p>
+      <p>Reutiliza o mesmo payload de <code>/api/v1/query</code>.</p>
+
+      <h3>5.4 POST /api/v1/crawl</h3>
+      <p>Inicia o processo de crawling e reindexação da documentação.</p>
+      <pre><code>{
+  "max_pages": 50,
+  "force_refresh": false
+}</code></pre>
+
+      <h3>5.5 GET /api/v1/health</h3>
+      <p>Verifica a saúde da API e dos serviços internos.</p>
+
+      <h3>5.6 GET /api/v1/stats</h3>
+      <p>Retorna estatísticas de uso e métricas básicas.</p>
+
+      <h3>5.7 GET /api/v1/index-info</h3>
+      <p>Retorna informações do índice FAISS, como número de documentos e dimensões.</p>
+
+      <h3>5.8 GET /</h3>
+      <p>Retorna nome da API, versão e status.</p>
+    </div>
+
+    <div class="section">
+      <h2>6. Exemplo de uso com curl</h2>
+      <pre><code>curl -X POST "http://localhost:8000/api/v1/query" \
+  -H "Content-Type: application/json" \
+  -H "X-API-KEY: SUA_CHAVE_AQUI" \
+  -d '{
+    "query": "O que é um chaincode no Hyperledger Fabric?",
+    "use_cache": true,
+    "use_ontology": true,
+    "top_k": 4
+  }'
+</code></pre>
+
+      <h2>7. Exemplo de uso em Python</h2>
+      <pre><code>import requests
+
+url = "http://localhost:8000/api/v1/query"
+headers = {
+    "Content-Type": "application/json",
+    "X-API-KEY": "SUA_CHAVE_AQUI"
+}
+payload = {
+    "query": "Explique o conceito de chaincode no Hyperledger Fabric.",
+    "use_cache": True,
+    "use_ontology": True,
+    "top_k": 4
+}
+response = requests.post(url, json=payload, headers=headers)
+print(response.status_code)
+print(response.json())
+</code></pre>
+
+      <div class="note">
+        <strong>Dica:</strong> se a API estiver configurada sem <code>X-API-KEY</code>, basta remover o cabeçalho do request.
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>8. Exemplos de instruções de uso</h2>
+      <p>Use perguntas objetivas e específicas para obter melhores respostas:</p>
+      <ul>
+        <li><strong>Bom:</strong> "O que é um chaincode no Hyperledger Fabric?"</li>
+        <li><strong>Bom:</strong> "Como funciona o processo de endorsement em Fabric?"</li>
+        <li><strong>Ruim:</strong> "Fale sobre Fabric"</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>9. Execução do RAG via CLI</h2>
+      <p>Além da API, há uma interface CLI no arquivo <code>src/main.py</code>:</p>
+      <pre><code>python src/main.py crawl --pages 50
+python src/main.py ask "O que é um chaincode no Hyperledger Fabric?"
+</code></pre>
+      <p>O comando <code>crawl</code> gera ou atualiza o índice em <code>faiss_index_v2</code>.</p>
+    </div>
+
+    <div class="section">
+      <h2>10. Observações finais</h2>
+      <ul>
+        <li>O índice vetorial deve existir antes das consultas via API.</li>
+        <li>A API usa um modelo local TinyLlama e embeddings locais para minimizar dependências externas.</li>
+        <li>Os endpoints de administração exigem autenticação quando o modo de API key está ativo.</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>
